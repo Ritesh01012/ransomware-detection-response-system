@@ -1,0 +1,29 @@
+# RDRS Configuration File
+
+monitor:
+  paths:
+    - "./sandbox"
+  process_interval_seconds: 30
+
+detection:
+  entropy_threshold: 7.0
+  time_window_seconds: 60
+  modification_threshold: 20
+  deletion_threshold: 10
+  rename_threshold: 10
+  alert_threshold: 40
+
+response:
+  simulation_mode: true
+  quarantine_path: "./quarantine"
+
+reports:
+  output_path: "./reports_output"
+
+database:
+  path: "./rdrs.db"
+
+api:
+  host: "127.0.0.1"
+  port: 5000
+  debug: false

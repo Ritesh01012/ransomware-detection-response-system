@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RDRS | Security Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0b1120;
+            color: #e5e7eb;
+        }
+
+        header {
+            background: #111b2e;
+            padding: 20px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #263449;
+        }
+
+        header h1 {
+            color: #38bdf8;
+            font-size: 24px;
+        }
+
+        header p {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .status {
+            color: #4ade80;
+            font-size: 14px;
+        }
+
+        main {
+            max-width: 1400px;
+            margin: auto;
+            padding: 30px 5%;
+        }
+
+        .heading {
+            margin-bottom: 20px;
+        }
+
+        .heading h2 {
+            font-size: 26px;
+            margin-bottom: 8px;
+        }
+
+        .heading p {
+            color: #94a3b8;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .card, .panel {
+            background: #111b2e;
+            border: 1px solid #263449;
+            border-radius: 12px;
+            padding: 22px;
+        }
+
+        .card p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .card h3 {
+            font-size: 30px;
+            margin-top: 14px;
+        }
+
+        .blue { color: #38bdf8; }
+        .green { color: #4ade80; }
+        .yellow { color: #facc15; }
+        .red { color: #f87171; }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            min-width: 0;
+            margin-bottom: 20px;
+        }
+
+        .panel h3 {
+            margin-bottom: 18px;
+            font-size: 18px;
+        }
+
+        .panel.full {
+            grid-column: 1 / -1;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid #263449;
+            word-break: break-word;
+        }
+
+        th {
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .empty {
+            color: #94a3b8;
+            padding: 15px 0;
+        }
+
+        .refresh {
+            border: 0;
+            background: #0284c7;
+            color: white;
+            border-radius: 7px;
+            padding: 10px 16px;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+
+        .refresh:hover {
+            background: #0369a1;
+        }
+
+        #message {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-top: 12px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 24px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        @media (max-width: 850px) {
+            .cards {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>RDRS Security</h1>
+            <p>Ransomware Detection & Response System</p>
+        </div>
+        <div class="status">● Local API Dashboard</div>
+    </header>
+
+    <main>
+        <section class="heading">
+            <h2>Security Overview</h2>
+            <p>Monitor recorded file activity, alerts and incidents.</p>
+            <button class="refresh" onclick="loadDashboard()">
+                Refresh Dashboard
+            </button>
+            <p id="message">Loading dashboard data...</p>
+        </section>
+
+        <section class="cards">
+            <div class="card">
+                <p>Total File Events</p>
+                <h3 class="blue" id="eventCount">—</h3>
+            </div>
+
+            <div class="card">
+                <p>Process Records</p>
+                <h3 class="green" id="processCount">—</h3>
+            </div>
+
+            <div class="card">
+                <p>Total Alerts</p>
+                <h3 class="yellow" id="alertCount">—</h3>
+            </div>
+
+            <div class="card">
+                <p>Open Incidents</p>
+                <h3 class="red" id="incidentCount">—</h3>
+            </div>
+        </section>
+
+        <section class="layout">
+            <div class="panel">
+                <h3>Recent Security Alerts</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Score</th>
+                                <th>Level</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alertsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>Incident Records</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Alert ID</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incidentsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel full">
+                <h3>Recent File Events</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Event</th>
+                                <th>File Path</th>
+                                <th>Entropy</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel full">
+                <h3>Process Records</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>PID</th>
+                                <th>Name</th>
+                                <th>CPU %</th>
+                                <th>Memory MB</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="processesTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        RDRS · Defensive monitoring project · Local testing only
+    </footer>
+
+    <script>
+        function escapeHTML(value) {
+            return String(value ?? "").replace(/[&<>"']/g, function (char) {
+                return {
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;"
+                }[char];
+            });
+        }
+
+        function showRows(id, rows, columns, emptyMessage) {
+            const tbody = document.getElementById(id);
+
+            if (!rows.length) {
+                tbody.innerHTML =
+                    `<tr><td colspan="${columns.length}" class="empty">${
+                        escapeHTML(emptyMessage)
+                    }</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = rows.map(row =>
+                "<tr>" + columns.map(column =>
+                    `<td>${escapeHTML(column(row))}</td>`
+                ).join("") + "</tr>"
+            ).join("");
+        }
+
+        async function getJSON(path) {
+            const response = await fetch(path);
+
+            if (!response.ok) {
+                throw new Error(path + " returned HTTP " + response.status);
+            }
+
+            return response.json();
+        }
+
+        async function loadDashboard() {
+            const message = document.getElementById("message");
+            message.textContent = "Loading latest records...";
+
+            try {
+                const [status, alerts, incidents, events, processes] =
+                    await Promise.all([
+                        getJSON("/api/status"),
+                        getJSON("/api/alerts"),
+                        getJSON("/api/incidents"),
+                        getJSON("/api/events"),
+                        getJSON("/api/processes")
+                    ]);
+
+                document.getElementById("eventCount").textContent =
+                    status.events;
+
+                document.getElementById("processCount").textContent =
+                    status.process_records;
+
+                document.getElementById("alertCount").textContent =
+                    status.alerts;
+
+                document.getElementById("incidentCount").textContent =
+                    status.open_incidents;
+
+                showRows("alertsTable", alerts.slice(0, 10), [
+                    item => item.id,
+                    item => item.threat_score,
+                    item => item.threat_level,
+                    item => item.timestamp
+                ], "No alerts recorded.");
+
+                showRows("incidentsTable", incidents.slice(0, 10), [
+                    item => item.id,
+                    item => item.alert_id,
+                    item => item.status,
+                    item => item.timestamp
+                ], "No incidents recorded.");
+
+                showRows("eventsTable", events.slice(0, 15), [
+                    item => item.id,
+                    item => item.event_type,
+                    item => item.file_path,
+                    item => item.entropy ?? "N/A",
+                    item => item.timestamp
+                ], "No file events recorded.");
+
+                showRows("processesTable", processes.slice(0, 15), [
+                    item => item.pid,
+                    item => item.name,
+                    item => item.cpu_percent ?? "N/A",
+                    item => item.memory_mb,
+                    item => item.timestamp
+                ], "No process records. Run the process monitor first.");
+
+                message.textContent =
+                    "Data loaded successfully. Last refreshed: " +
+                    new Date().toLocaleTimeString();
+
+            } catch (error) {
+                message.textContent =
+                    "Dashboard error: " + error.message +
+                    " | Time: " + new Date().toLocaleTimeString();
+
+                console.error("RDRS Dashboard Error:", error);
+            }
+        }
+
+        loadDashboard();
+
+        setInterval(async () => {
+            const message = document.getElementById("message");
+
+            try {
+                await loadDashboard();
+            } catch (error) {
+                console.error("Automatic refresh failed:", error);
+                message.textContent =
+                    "Refresh failed: " + new Date().toLocaleTimeString();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
